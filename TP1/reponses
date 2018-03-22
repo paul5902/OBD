@@ -1,0 +1,100 @@
+TRANSFO :
+
+for $pdv in //pdv[starts-with(@cp, '59') or starts-with(@cp,'62') and count(prix)>0]
+return <pdv id='{$pdv/@id/data()}' latitude='{number($pdv/@latitude) div 100000}' longitude='{number($pdv/@longitude) div 100000}' cp='{$pdv/@cp/data()}'> pop='{$pdv/@pop/data()}' {
+  <adresse>{$pdv/adresse/text()}</adresse>,
+  <ville>{$pdv/ville/text()}</ville>,
+  <ouverture debut='{$pdv/ouverture/@debut/data()}' fin='{$pdv/ouverture/@fin/data()}' saufjour='{$pdv/ouverture/@saufjour/data()}'></ouverture>,
+  <services> {
+    for $service in $pdv/services/service
+    return <service>{$service/data()}</service>
+  }turn <prix nom='{$pdv/@nom/data()}' id='{$pdv/@id/data()}' valeur='{$pdv/@valeur/data()}'></prix>
+  </services>,
+  for $prix in $pdv/prix
+  return <prix nom='{$pdv/@nom/data()}' id='{$pdv/@id/data()}' valeur='{$pdv/@valeur/data()}'></prix>
+}
+</pdv>
+
+_____________________________________________________________________________
+
+create or replace
+type service as object(
+  name VARCHAR2(50));
+  
+create or replace 
+type listservice is varray(10) of service;
+
+create or replace
+type carburant as object(
+  name VARCHAR(8),
+  id NUMBER(2),
+  valeur VARCHAR(4)
+);
+
+create or replace
+type listcarburants is varray(10) of carburant;
+
+create or replace
+type Tadresse as object(
+  cp NUMBER(5),
+  ville VARCHAR2(20),
+  lieu VARCHAR2(20)
+);
+
+
+create table pdv(
+id INTEGER PRIMARY KEY,
+adresse Tadresse,
+geoloc SDO_GEOMETRY,
+carburants listcarburants,
+services listservice
+);
+
+
+insert into pdv values(1,
+Tadresse(59800,'lille','rue de lannoy'),
+sdo_geometry(2001,8307,sdo_point_type(3.30109415523,50.2924914941, null), null, null),
+listcarburants(carburant('sp95',1,1452),carburant('gazole',2,1252)),
+listservice(service('bar à vin'),service('massage thailandais')));
+
+select * from pdv;
+
+________________________________________________
+
+for $pdv in //pdv
+return (
+  "insert into pdv values(",
+  $pdv/@id/data(),",Tadresse(",$pdv/@cp/data(),",",$pdv/ville/data(),",",$pdv/adresse/text(),"),sdo_geometry,listcarburants(",
+for $carbu in $pdv/prix
+return (
+ "carburant(",$carbu/@nom/data(),",",$carbu/@id/data(),",",$carbu/@valeur/data(),")"),"),listservice(",
+ string-join((for $service in $pdv/services/service
+ return (
+   concat("service(",$service/data(),")")
+ )),',')
+
+
+-------------------
+
+QUESTION 4 )
+D'où je suis, quelle est la station la plus proche où je peux trouver du SP95 ?
+
+select min(sdo_geom.sdo_distance(
+p.locgps,
+sdo_geometry(2001,8307,sdo_point_type(3.136336,50.609753, null), null, null),
+0.1,'UNIT=KM'
+)) dist from didier.pdv p, table(p.pxcarbu) px
+where px.nom='SP95';
+
+
+
+
+
+select sdo_geom.sdo_distance(
+p.locgps,
+sdo_geometry(2001,8307,sdo_point_type(3.136336,50.609753, null), null, null),
+0.1,'UNIT=KM'
+) dist from didier.pdv p, table(p.pxcarbu) px
+where px.nom='SP95' and dist<10;
+
+

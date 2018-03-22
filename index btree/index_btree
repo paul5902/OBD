@@ -1,0 +1,22 @@
+-- TP INDEX BTREE
+-- QUESTION 3
+
+select * from population where pop between 0 and 100; --table access full : pas d'index utilisé -> tellement de blocks que pas d'intérêt à aller les chercher un par un avec l'index.
+
+select * from population where pop between 1000 and 1100; -- table access full
+
+select * from population where pop between 20000 and 20100; --table access by index rowid
+
+select * from population where pop between 10000 and 15000; -- table  access full
+
+select * from population where pop between 20000 and 25000; --index
+
+-- QUESTION 4
+
+select count(*) from population where instr(nom,'nil')>0; -- table access full
+
+select count(*) from population where nom like '%nil%'; -- index
+select max(nom) from population where nom like 'A%'; --index
+
+select * from population where codedept='2A' ; --
+select count(*) from population where codedept = '2A' ; --

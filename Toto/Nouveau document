@@ -1,0 +1,32 @@
+--create table custom_histo(
+--nom_histo VARCHAR2(30),
+--num_bucket NUMBER,
+--high_value NUMBER
+--);
+
+create or replace procedure createhistogram(nom_histo VARCHAR2,num_bucket number, borne_inf number, borne_sup number) as
+nbLignes NUMBER;
+nbLignesPerBucket NUMBER;
+loop_counter NUMBER;
+crow NUMBER;
+cnum NUMBER;
+CURSOR c1
+   IS
+     SELECT rownum,pop
+     FROM population
+     WHERE pop>=borne_inf and pop<=borne_sup;
+BEGIN
+  loop_counter:=1;
+  select count(*) into nbLignes from population where pop>=borne_inf and pop<=borne_sup;
+  nbLignesPerBucket:=nbLignes/num_bucket;
+  OPEN c1;
+   FETCH c1 INTO crow,cnum;
+
+   if MOD(crow,nbLignesPerBucket) then
+      loop_counter:=loop_counter+1;
+      insert into custom_histo values(nom_histo,loop_counter,cnum);
+   end if;
+
+   CLOSE c1;
+  commit;
+END;

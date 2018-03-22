@@ -1,0 +1,118 @@
+--Question1
+
+create table population_nom(
+coderegion char(2 byte),
+codedept char(2 byte),
+nom varchar2(50 byte),
+pop number(10,0)
+)
+partition by range(nom)(
+  PARTITION p1 VALUES less than ('B'),
+  PARTITION p2 VALUES less than ('D'),
+  PARTITION p3 VALUES less than ('K'),
+  PARTITION p4 VALUES less than ('N'),
+  PARTITION p5 VALUES less than ('R'),
+  PARTITION p6 VALUES less than ('V'),
+  PARTITION p7 VALUES less than (maxvalue)
+
+);
+
+--Question2
+insert into population_hash value(select * from population);
+
+select * from population_nom partition(p1);
+
+--Question 3
+-- Requête 1
+select * from population where nom = 'Ars' or nom='Y';
+select * from population_nom where nom = 'Ars' or nom='Y';
+-- Pas d'effet optimisant, coût > dans la requête partitionnée. Partition start = key(inlist) , stop = key(inlist)
+--Req2
+select * from population where nom between 'Y' and 'Zonza'; 
+-- Cost 42
+select * from population_nom where nom between 'Y' and 'Zonza';
+-- Cost 5
+-- Effet optimisant, coût < dans la requête partitionnée.
+--req3
+select * from population where nom like 'Z%' ;
+select * from population_nom where nom like 'Z%' ;
+
+--req 4
+select * from population where nom like '%z';
+select * from population_nom where nom like '%z';
+
+--req 5 
+select count(*) from population_nom partition(p7);
+
+--Question 4 : 
+merge : fusionne des partitions adjacentes
+split : subdiviser une partition
+
+alter table population_nom split partition p2 at('Chameyrat') into (partition p2a, partition p2b);
+alter table population_nom merge partitions p1, p2a into partition p1new ;
+
+select count(*) from population_nom partition(p2b);
+
+
+--question 5
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create table population_list(
+coderegion char(2 byte),
+codedept char(2 byte),
+nom varchar2(50 byte),
+pop number(10,0)
+)
+partition by list(coderegion)(
+partition ph1 VALUES('93','28'),
+partition ph2 VALUES('75','94'),
+partition ph3 VALUES('11','44'),
+partition ph4 VALUES('76','32'),
+partition ph5 VALUES('84','52'),
+partition ph6 VALUES('24','27'),
+partition ph7 VALUES('53')
+)
+/
